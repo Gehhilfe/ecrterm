@@ -8,9 +8,9 @@
      - see the representation of the packet
      - ability for incoming and outgoing
 """
-from ecrterm import common, conv
+import ecrterm.common, ecrterm.conv
 from ecrterm.packets import *
-from ecrterm import transmission
+import ecrterm.transmission
 from ecrterm.transmission.signals import *
 import time, sys, logging
 from ecrterm.common import TERMINAL_STATUS_CODES
@@ -28,10 +28,10 @@ def dismantle_serial_packet(data):
     #header = conv.bs2hl(header)
     # test if there was a transmission:
     if header == []:
-        raise common.TransportLayerException, 'No Header'
+        raise common.TransportLayerException('No Header')
     # test our header to be valid
     if header != [DLE, STX]:
-        raise common.TransportLayerException, "Header Error: %s" % header
+        raise common.TransportLayerException("Header Error: %s" % header)
     # read until DLE, ETX is reached.
     dle = False
     while not crc and i < len(data):
@@ -53,7 +53,7 @@ def dismantle_serial_packet(data):
         elif dle:
             # dle was set, but we got no etx here.
             # this seems to be an error.
-            raise Exception, "DLE without sense detected."
+            raise Exception("DLE without sense detected.")
         # we add this byte to our apdu.
         apdu += [b]
         i += 1
@@ -97,16 +97,16 @@ def ecr_log(data, incoming=False):
         try:
             data = repr(parse_represented_data(data))
             _logfile.write('= %s\n' % data)
-        except Exception, e:
-            print "DEBUG: Cannot be represented: %s" % data
-            print e
+        except Exception as e:
+            print("DEBUG: Cannot be represented: %s" % data)
+            print(e)
             _logfile.write('? did not understand ?\n')
             data = conv.toHexString(data)
-        print "%s %s" % (incoming, data)
+        print("%s %s" % (incoming, data))
     except:
         import traceback
         traceback.print_exc()
-        print "| error in log"
+        print("| error in log")
 
 class ECR(object):
     transmitter = None
@@ -145,7 +145,7 @@ class ECR(object):
             self.transmitter = transmission.Transmission(self.transport)
             self._state_connected = True
         else:
-            raise Exception, "ECR could not connect."
+            raise Exception("ECR could not connect.")
 
     def register(self):
         """
@@ -258,7 +258,7 @@ class ECR(object):
                 return False
         else:
             # @todo: remove this.
-            print "transmit error?"
+            print("transmit error?")
         return False
 
     def restart(self):
@@ -350,7 +350,7 @@ class ECR(object):
         """
         status = self.status()
         while status:
-            print TERMINAL_STATUS_CODES.get(status, 'Unknown Status')
+            print(TERMINAL_STATUS_CODES.get(status, 'Unknown Status'))
             time.sleep(2)
             status = self.status()
 
@@ -364,10 +364,10 @@ class ECR(object):
                 ok, message = self.transport.receive(timeout)
                 if ok and message:
                     return message
-            except Exception, e:
-                print e
+            except Exception as e:
+                print(e)
                 continue
-            print "-mark-"
+            print("-mark-")
 
     def devprint_packets(self):
         """
@@ -402,6 +402,6 @@ if __name__ == '__main__':
     e = ECR()
     #e.end_of_day()
     e.show_text(['Hello world!', 'Testing', 'myself.'], 5, 0)
-    print "preparing for payment."
+    print("preparing for payment.")
     e.get_ready()
-    print e.payment(50)
+    print(e.payment(50))

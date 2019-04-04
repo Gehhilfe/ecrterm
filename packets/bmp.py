@@ -27,7 +27,7 @@ class BMPFactory(Dumpling):
 
     @classmethod
     def FormatTLV(cls,):
-        from tlv import TLV
+        from ecrterm.packets.tlv import TLV
         return TLV
 
     @classmethod
@@ -55,7 +55,7 @@ class BMPFactory(Dumpling):
         bmp._key = bmp_key
         rest = bmp.parse(data)
         if len(rest) and (len(rest) == len(data)):
-            raise NotImplemented, "Bitmap Class without parsing mechanism detected"
+            raise NotImplemented("Bitmap Class without parsing mechanism detected")
         return bmp, rest
 
 class BMP(BMPFactory):
@@ -158,7 +158,7 @@ class LVAR(BMP):
         if self.LL:
             line = self._data
             if len(str(len(str(line)))) > self.LL:
-                raise IndexError, "Line too long (%s): %s" % (len(line), line)
+                raise IndexError("Line too long (%s): %s" % (len(line), line))
 
     def value(self):
         return conv.hl2bs(self._data)
@@ -181,7 +181,7 @@ class LVAR(BMP):
             elif isinstance(line, list):
                 ret += l + line
             else:
-                raise TypeError, "Line has unsupported type in LVAR: %s" % type(line)
+                raise TypeError("Line has unsupported type in LVAR: %s" % type(line))
         return ret
 
     def parse(self, data):
@@ -263,7 +263,7 @@ class BCD(FixedLength):
             if t[0] < 10 and t[1] < 10:
                 return (t[0] << 4) + t[1]
             else:
-                raise ValueError, "BCD Unite can only unify two numbers < 10"
+                raise ValueError("BCD Unite can only unify two numbers < 10")
 
     @classmethod
     def decode_bcd(cls, something):

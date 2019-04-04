@@ -14,7 +14,7 @@ import os, serial, select, time#@UnresolvedImport
 from ecrterm.transmission.signals import *
 import asyncio
 import logging
-
+import re
 
 DEFAULT_PORT = 1234
 
@@ -26,52 +26,49 @@ class TCPTransport(common.Transport):
 
     def __init__(self, connectionString, log=None):
         self.connectionString = connectionString
-        self.connection = None
+        self.writer = None
 
-    def connect(self):
+    async def connect(self):
         regex = '(?P<host>[^:/ ]+).?(?P<port>[0-9]*).*'
         matcher = re.search(regex, self.connectionString)
-        hostname = m.group('host')
-        port = m.group('port')
+        hostname = matcher.group('host')
+        port = matcher.group('port')
         if not port:
             port = DEFAULT_PORT
         else:
             port = int(port)
-        self.connection = await asyncio.open_connection(host, port)
+        self.reader, self.writer = await asyncio.open_connection(hostname, port)
 
     def close(self):
-        if self.connection:
-            self.connection.close()
+        if self.writer:
+            self.writer.close()
 
     def reset(self):
         pass
 
-    def receive(self):
+    async def receive(self):
         apdu = []
-        pktClass = await self.connection.readexactly(2))
+        pktClass = await self.reader.readexactly(2)
         apdu  += pktClass
         length = 0
-        bLength = await self.connection.readexactly(1)
-        apdu += [bLength]
+        bLength = await self.reader.readexactly(1)
+        apdu += [int.from_bytes(bLength, 'big')]
         
         if bLength == 0xFF:
-            bLength = await self.connection.readexactly(2)
-            apdu.extend([bLength])
-            length = int.from_bytes(bLength, 'big')
-        else
-            length = bLength
-
-        data = await self.connection.readexactly(length)
-        apdu.extend([data])
-        logging.info("Received APDU pktClass = %s, length = %i" % pktClass, length)
+            bLength = await self.reader.readexactly(2)
+            apdu.extend([int.from_bytes(bLength, 'big')])
+        length = int.from_bytes(bLength, 'big')
+        data = await self.reader.readexactly(length)
+        apdu += data
+        logging.info("Received APDU pktClass = %s, length = %s" % (pktClass, length))
 
         return True, APDUPacket.parse(apdu)
 
 
-    def send(self, apdu, tries=0, no_wait=False):
+    async def send(self, apdu, tries=0, no_wait=False):
         if apdu:
-            self.connection.write(apdu.to_list())
-            await self.connection.drain()
+            self.writer.write(apdu.to_list())
+            await self.writer.drain()
 
             if not no_wait:
                 return self.receive()

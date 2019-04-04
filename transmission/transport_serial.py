@@ -19,11 +19,11 @@ def std_serial_log(instance, data, incoming=False):
         if isinstance(incoming, basestring):
             data = conv.bs2hl(data)
         if incoming:
-            print "< %s" % conv.toHexString(data)
+            print("< %s" % conv.toHexString(data))
         else:
-            print "> %s" % conv.toHexString(data)
+            print("> %s" % conv.toHexString(data))
     except:
-        print "| error in log"
+        print ("| error in log")
 
 def noop(*args, **kwargs):
     pass
@@ -49,7 +49,7 @@ class SerialMessage(object):
         try:
             return crc.crc_xmodem16(data)
         except:
-            print self.apdu
+            print (self.apdu)
             raise
 
     def _get_crc_l(self):
@@ -160,11 +160,11 @@ class SerialTransport(common.Transport):
         header = conv.bs2hl(header)
         # test if there was a transmission:
         if header == []:
-            raise common.TransportLayerException, 'Reading Header Timeout'
+            raise common.TransportLayerException('Reading Header Timeout')
         # test our header to be valid
         if header != [DLE, STX]:
             self.slog(header, True)
-            raise common.TransportLayerException, "Header Error: %s" % header
+            raise common.TransportLayerException("Header Error: %s" % header)
         # read until DLE, ETX is reached.
         dle = False
         # timeout to T1 after header.
@@ -173,13 +173,13 @@ class SerialTransport(common.Transport):
             b = ord(self.connection.read(1)) # read a byte.
             if b is None:
                 # timeout
-                raise common.TransportLayerException, "Timeout T1 reading stream."
+                raise common.TransportLayerException("Timeout T1 reading stream.")
             if b == ETX and dle:
                 # dle was set, and this is ETX, so we are at the end.
                 # we read the CRC now.
                 crc = self.connection.read(2)
                 if not crc:
-                    raise common.TransportLayerException, "Timeout T1 reading CRC"
+                    raise common.TransportLayerException("Timeout T1 reading CRC")
                 else:
                     crc = conv.bs2hl(crc)
                 # and break
@@ -195,7 +195,7 @@ class SerialTransport(common.Transport):
             elif dle:
                 # dle was set, but we got no etx here.
                 # this seems to be an error.
-                raise common.TransportLayerException, "DLE without sense detected."
+                raise common.TransportLayerException("DLE without sense detected.")
             # we add this byte to our apdu.
             apdu += [b]
         self.slog(header + apdu + [DLE, ETX] + crc, True)
@@ -205,7 +205,7 @@ class SerialTransport(common.Transport):
         try:
             crc, apdu = self.read(timeout)
             msg = SerialMessage(apdu)
-        except Exception, e:
+        except Exception as e:
             # this is a NAK - re-raise for further investigation.
             self.write_nak()
             raise e
@@ -256,13 +256,13 @@ class SerialTransport(common.Transport):
                 #if tries < 3:
                 #    return self.send_message(message, tries + 1, no_answer)
                 #else:
-                raise common.TransportLayerException, "Could not send message"
+                raise common.TransportLayerException("Could not send message")
             elif not acknowledge:
                 # this happens quite a lot with the ingenico devices.
                 # possibly a workaround would be nice.
-                raise common.TransportTimeoutException, "No Answer, Possible Timeout"
+                raise common.TransportTimeoutException("No Answer, Possible Timeout")
             else:
-                raise common.TransportLayerException, "Unknown Acknowledgmenet Byte %s" % conv.bs2hl(acknowledge)
+                raise common.TransportLayerException("Unknown Acknowledgmenet Byte %s" % conv.bs2hl(acknowledge))
 
     def send(self, apdu, tries=0, no_wait=False):
         """
@@ -275,9 +275,9 @@ if __name__ == '__main__':
     c = SerialTransport('/dev/ttyUSB0')
     from ecrterm.packets.base_packets import Registration
     if c.connect():
-        print "connected to usb0"
+        print ("connected to usb0")
     else:
         exit()
     # register
     answer = c.send_serial(Registration())
-    print answer
+    print (answer)

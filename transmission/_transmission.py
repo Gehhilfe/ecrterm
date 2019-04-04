@@ -71,7 +71,7 @@ class Transmission(object):
             whole sequence is finished.
         """
         if not self.is_master or self.is_waiting:
-            raise TransmissionException, "Can't send until transmisson is ready"
+            raise TransmissionException("Can't send until transmisson is ready")
         self.is_master = False
         self.last = packet
         try:
@@ -97,9 +97,9 @@ class Transmission(object):
                     if self.is_master and success:
                         # we actually have to handle a last packet
                         stay_master = self.handle_packet_response(packet, response)
-                        print "Is Master Read Ahead happened."
+                        print("Is Master Read Ahead happened.")
                         self.is_master = stay_master
-        except Exception, e:
+        except Exception as e:
             self.is_master = True
             raise
             return TRANSMIT_ERROR
